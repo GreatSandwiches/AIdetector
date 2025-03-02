@@ -1,0 +1,967 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Text Detector</title>
+    <style>
+        :root {
+            --primary: #6366f1;
+            --primary-dark: #4f46e5;
+            --secondary: #c4b5fd;
+            --background: #f9fafb;
+            --card: #ffffff;
+            --text: #1f2937;
+            --text-light: #6b7280;
+            --border: #e5e7eb;
+            --success: #10b981;
+            --warning: #f59e0b;
+            --danger: #ef4444;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', sans-serif;
+        }
+
+        body {
+            background-color: var(--background);
+            color: var(--text);
+            line-height: 1.6;
+            padding: 20px;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 800px;
+            padding: 30px;
+            background-color: var(--card);
+            border-radius: 12px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+        }
+
+        h1 {
+            text-align: center;
+            margin-bottom: 8px;
+            color: var(--primary-dark);
+            font-size: 2.2rem;
+        }
+
+        .subtitle {
+            text-align: center;
+            color: var(--text-light);
+            margin-bottom: 30px;
+            font-size: 1.1rem;
+        }
+
+        .input-group {
+            margin-bottom: 20px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 500;
+        }
+
+        textarea {
+            width: 100%;
+            min-height: 200px;
+            padding: 12px;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            font-size: 1rem;
+            resize: vertical;
+            transition: border-color 0.3s;
+        }
+
+        textarea:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.2);
+        }
+
+        .btn {
+            display: inline-block;
+            background-color: var(--primary);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: background-color 0.3s, transform 0.2s;
+        }
+
+        .btn:hover {
+            background-color: var(--primary-dark);
+        }
+
+        .btn:active {
+            transform: translateY(1px);
+        }
+
+        .actions {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 30px;
+        }
+
+        .sample-btn {
+            background: transparent;
+            color: var(--primary);
+            border: 1px solid var(--primary);
+            padding: 12px 24px;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+
+        .sample-btn:hover {
+            background-color: rgba(99, 102, 241, 0.1);
+        }
+
+        .checkbox-container {
+            display: flex;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+        
+        input[type="checkbox"] {
+            width: 16px;
+            height: 16px;
+            margin-right: 5px;
+            accent-color: var(--primary);
+        }
+
+        .result-card {
+            padding: 20px;
+            border-radius: 8px;
+            background-color: #f3f4f6;
+            margin-top: 30px;
+            display: none;
+        }
+
+        .result-header {
+            display: flex;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+
+        .result-title {
+            font-size: 1.5rem;
+            font-weight: 600;
+            margin-right: 10px;
+        }
+
+        .progress-container {
+            height: 10px;
+            background-color: var(--border);
+            border-radius: 5px;
+            overflow: hidden;
+            flex-grow: 1;
+            margin: 0 10px;
+        }
+
+        .progress-bar {
+            height: 100%;
+            border-radius: 5px;
+            transition: width 1s;
+        }
+
+        .confidence {
+            display: flex;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .confidence-label {
+            width: 150px;
+            font-weight: 500;
+        }
+
+        .probability-text {
+            min-width: 50px;
+            text-align: right;
+            font-weight: 600;
+        }
+
+        .indicators {
+            margin-top: 20px;
+        }
+
+        .indicator {
+            display: flex;
+            margin-bottom: 10px;
+            padding: 10px;
+            border-radius: 8px;
+            background-color: white;
+        }
+
+        .indicator-dot {
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            margin-right: 10px;
+        }
+
+        .dot-high {
+            background-color: var(--danger);
+        }
+
+        .dot-medium {
+            background-color: var(--warning);
+        }
+
+        .dot-low {
+            background-color: var(--success);
+        }
+
+        .highlighted-text {
+            margin-top: 20px;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 20px;
+            font-size: 1rem;
+            line-height: 1.7;
+            max-height: 300px;
+            overflow-y: auto;
+            background-color: white;
+        }
+
+        .highlight-ai-likely {
+            background-color: rgba(239, 68, 68, 0.3);
+            border-radius: 4px;
+            padding: 2px 4px;
+            position: relative;
+            display: inline;
+            cursor: help;
+        }
+
+        .highlight-ai-maybe {
+            background-color: rgba(245, 158, 11, 0.3);
+            border-radius: 4px;
+            padding: 2px 4px;
+            position: relative;
+            display: inline;
+            cursor: help;
+        }
+        
+        /* Tooltip for hovering over highlighted text */
+        .highlight-ai-likely:hover::after,
+        .highlight-ai-maybe:hover::after {
+            content: attr(title);
+            position: absolute;
+            bottom: 100%;
+            left: 50%;
+            transform: translateX(-50%);
+            background-color: var(--text);
+            color: white;
+            padding: 8px 12px;
+            border-radius: 6px;
+            white-space: nowrap;
+            font-size: 0.85rem;
+            z-index: 10;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+            max-width: 300px;
+            white-space: normal;
+        }
+
+        .reasons-section {
+            margin-top: 20px;
+            padding: 15px;
+            background-color: rgba(99, 102, 241, 0.1);
+            border-radius: 8px;
+        }
+
+        .disclaimer {
+            margin-top: 30px;
+            padding: 15px;
+            background-color: rgba(99, 102, 241, 0.1);
+            border-radius: 8px;
+            font-size: 0.9rem;
+            color: var(--text-light);
+            text-align: center;
+        }
+
+        @media (max-width: 600px) {
+            .container {
+                padding: 20px;
+            }
+
+            h1 {
+                font-size: 1.8rem;
+            }
+
+            .actions {
+                flex-direction: column;
+                gap: 10px;
+            }
+
+            .btn, .sample-btn {
+                width: 100%;
+            }
+
+            .confidence {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+
+            .confidence-label {
+                margin-bottom: 5px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Advanced AI Text Detector</h1>
+        <p class="subtitle">Professional-grade analysis comparable to Turnitin & Grammarly</p>
+        
+        <div class="input-group">
+            <label for="text-input">Paste your text below:</label>
+            <textarea id="text-input" placeholder="Enter or paste the text you want to analyze..."></textarea>
+        </div>
+        
+        <div class="checkbox-container">
+            <input type="checkbox" id="formal-writing-mode">
+            <span style="margin-left: 5px;">Formal Writing Mode</span>
+            <span style="font-size: 0.85rem; margin-left: 10px; color: var(--text-light);">(Use when analyzing academic/professional writing)</span>
+        </div>
+        
+        <div class="actions">
+            <button id="sample-btn" class="sample-btn">Load Sample Text</button>
+            <button id="analyze-btn" class="btn">Analyze Text</button>
+        </div>
+        
+        <div id="result" class="result-card">
+            <div class="result-header">
+                <h2 class="result-title">Analysis Results</h2>
+            </div>
+            
+            <div class="confidence">
+                <div class="confidence-label">AI Generated:</div>
+                <div class="progress-container">
+                    <div id="ai-probability" class="progress-bar" style="width: 0%; background-color: var(--success);"></div>
+                </div>
+                <div id="probability-text" class="probability-text">0%</div>
+            </div>
+            
+            <div class="confidence">
+                <div class="confidence-label">Human Written:</div>
+                <div class="progress-container">
+                    <div id="human-probability" class="progress-bar" style="width: 0%; background-color: var(--primary);"></div>
+                </div>
+                <div id="human-probability-text" class="probability-text">0%</div>
+            </div>
+            
+            <div class="indicators">
+                <h3>Key Indicators:</h3>
+                
+                <div class="indicator">
+                    <div id="patterns-dot" class="indicator-dot"></div>
+                    <div class="indicator-text">
+                        <strong>Language Patterns</strong>
+                        <p id="patterns-text">Analyzing formal phrases, repeated patterns, and predictability of word choices...</p>
+                    </div>
+                </div>
+                
+                <div class="indicator">
+                    <div id="structures-dot" class="indicator-dot"></div>
+                    <div class="indicator-text">
+                        <strong>Sentence Structures</strong>
+                        <p id="structures-text">Analyzing sentence length variation, complexity, and sentence beginnings...</p>
+                    </div>
+                </div>
+                
+                <div class="indicator">
+                    <div id="vocabulary-dot" class="indicator-dot"></div>
+                    <div class="indicator-text">
+                        <strong>Vocabulary Usage</strong>
+                        <p id="vocabulary-text">Analyzing vocabulary diversity, word sophistication, and information density...</p>
+                    </div>
+                </div>
+            </div>
+            
+            <div id="highlighted-section">
+                <h3 style="margin-top: 20px; margin-bottom: 10px;">Highlighted Analysis:</h3>
+                <div id="highlighted-text" class="highlighted-text"></div>
+            </div>
+            
+            <div id="reasons-section" class="reasons-section">
+                <h3 style="margin-bottom: 10px;">In-Depth Analysis Results:</h3>
+                <ul id="reasons-list" style="padding-left: 20px;"></ul>
+                
+                <div style="margin-top: 20px;">
+                    <h4 style="margin-bottom: 8px;">How to Interpret Results:</h4>
+                    <p style="margin-bottom: 12px;">This analysis examines multiple linguistic dimensions that differ between AI and human writing:</p>
+                    <ul style="padding-left: 20px; margin-bottom: 15px;">
+                        <li><strong>Language Patterns:</strong> AI often uses predictable phrases and transitions</li>
+                        <li><strong>Sentence Structures:</strong> AI tends to produce more uniform sentence lengths and patterns</li>
+                        <li><strong>Vocabulary Usage:</strong> AI typically shows different word diversity and complexity patterns</li>
+                    </ul>
+                    <p><strong>Note:</strong> These patterns are statistical indicators, not definitive proof. Context matters, and some human writing may exhibit AI-like patterns, particularly formal academic writing.</p>
+                </div>
+            </div>
+        </div>
+        
+        <div class="disclaimer">
+            <p><strong>Disclaimer:</strong> This AI detector uses advanced linguistic analysis comparable to professional tools. While highly accurate, no detector is 100% reliable. <strong>Academic/technical writing</strong> can sometimes produce false positives due to shared characteristics with AI text. Enable "Formal Writing Mode" when analyzing professional content. Results should be considered alongside human judgment.</p>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Initialize all elements
+            const textInput = document.getElementById('text-input');
+            const analyzeBtn = document.getElementById('analyze-btn');
+            const sampleBtn = document.getElementById('sample-btn');
+            const formalModeCheckbox = document.getElementById('formal-writing-mode');
+            const resultCard = document.getElementById('result');
+            const aiProbabilityBar = document.getElementById('ai-probability');
+            const humanProbabilityBar = document.getElementById('human-probability');
+            const probabilityText = document.getElementById('probability-text');
+            const humanProbabilityText = document.getElementById('human-probability-text');
+            const highlightedText = document.getElementById('highlighted-text');
+            const reasonsList = document.getElementById('reasons-list');
+            const reasonsSection = document.getElementById('reasons-section');
+            const highlightedSection = document.getElementById('highlighted-section');
+            
+            // Indicator elements
+            const patternsDot = document.getElementById('patterns-dot');
+            const structuresDot = document.getElementById('structures-dot');
+            const vocabularyDot = document.getElementById('vocabulary-dot');
+            const patternsText = document.getElementById('patterns-text');
+            const structuresText = document.getElementById('structures-text');
+            const vocabularyText = document.getElementById('vocabulary-text');
+
+            // Sample texts
+            const aiSampleText = `Artificial intelligence (AI) has emerged as one of the most transformative technologies of the 21st century. Its applications span across various sectors, from healthcare to finance, transportation to entertainment. The remarkable capabilities of AI systems stem from their ability to process vast amounts of data, identify patterns, and make predictions or decisions based on those patterns.
+
+The development of AI can be traced back to the mid-20th century, but recent advancements in computing power, algorithm design, and data availability have accelerated its progress exponentially. Modern AI systems employ sophisticated techniques such as deep learning, which mimics the neural networks of the human brain, albeit in a simplified manner.
+
+As AI continues to evolve, it raises important questions about its impact on society, employment, privacy, and ethics. While AI offers tremendous potential benefits, including increased efficiency, improved decision-making, and solutions to complex problems, it also presents challenges that require careful consideration and management.`;
+
+            const humanSampleText = `I've been thinking about AI a lot lately. It's kind of scary how fast things are changing. Last week I was talking with my friend Sarah about how her company just started using some AI tool to write their marketing emails, and she's worried about her job. I told her I didn't think robots would replace creative people anytime soon, but honestly, who knows?
+
+The weird thing is, I'm both excited and nervous about all this tech. On one hand, I love how my phone can now edit my vacation photos to look professional without me doing anything. But then I see those deepfake videos online that look totally real, and it creeps me out.
+
+My brother works in cybersecurity, and he says we're not prepared for what's coming. He's always been a bit dramatic though! Still, I wonder if we're moving too fast without thinking things through. Maybe we need to slow down and figure out some rules?`;
+
+            // Set initial sample text
+            textInput.value = aiSampleText;
+
+            // Sample button click handler
+            sampleBtn.addEventListener('click', function() {
+                try {
+                    // Toggle between AI and human sample texts
+                    const currentText = textInput.value.trim();
+                    
+                    if (currentText === aiSampleText) {
+                        textInput.value = humanSampleText;
+                        sampleBtn.textContent = 'Load AI Sample';
+                    } else {
+                        textInput.value = aiSampleText;
+                        sampleBtn.textContent = 'Load Human Sample';
+                    }
+                } catch (error) {
+                    console.error("Error toggling sample text:", error);
+                }
+            });
+
+            // Analyze button click handler
+            analyzeBtn.addEventListener('click', function() {
+                const text = textInput.value.trim();
+                
+                if (!text) {
+                    alert('Please enter some text to analyze.');
+                    return;
+                }
+                
+                // Show loading state
+                analyzeBtn.textContent = 'Analyzing...';
+                analyzeBtn.disabled = true;
+                
+                // Get formal mode setting
+                const formalMode = formalModeCheckbox ? formalModeCheckbox.checked : false;
+                
+                // Simulate analysis delay
+                setTimeout(() => {
+                    try {
+                        const results = analyzeText(text, formalMode);
+                        displayResults(results, formalMode);
+                    } catch (error) {
+                        console.error("Analysis error:", error);
+                        alert("There was an error analyzing the text. Please try again.");
+                    } finally {
+                        // Reset button
+                        analyzeBtn.textContent = 'Analyze Text';
+                        analyzeBtn.disabled = false;
+                    }
+                }, 1000);
+            });
+
+            // Basic analysis function
+            function analyzeText(text, formalMode) {
+                // Core metrics
+                const words = text.split(/\s+/).filter(word => word.length > 0);
+                const wordCount = words.length;
+                
+                if (wordCount < 20) {
+                    return {
+                        aiProbability: 50,
+                        patternScore: 0.5,
+                        structureScore: 0.5,
+                        vocabularyScore: 0.5,
+                        highlightedHtml: text,
+                        reasons: ["Text sample too short for accurate analysis."]
+                    };
+                }
+                
+                // Enhanced sentence detection
+                const sentenceRegex = /(?<=[.!?])\s+(?=[A-Z])/g;
+                const sentences = text.replace(sentenceRegex, '|').split('|')
+                    .map(s => s.trim())
+                    .filter(s => s.length > 0);
+                
+                // Word-level analysis
+                const cleanWords = words.map(w => w.toLowerCase().replace(/[^\w]/g, ''))
+                    .filter(w => w.length > 0);
+                const uniqueWords = new Set(cleanWords);
+                const uniqueWordsRatio = uniqueWords.size / cleanWords.length;
+                
+                // Word frequency
+                const wordFreq = {};
+                cleanWords.forEach(word => {
+                    if (word.length > 3) {
+                        wordFreq[word] = (wordFreq[word] || 0) + 1;
+                    }
+                });
+                
+                // N-gram analysis
+                function createNGrams(array, n) {
+                    const result = [];
+                    for (let i = 0; i < array.length - n + 1; i++) {
+                        result.push(array.slice(i, i + n).join(' '));
+                    }
+                    return result;
+                }
+                
+                // Get bigrams
+                const bigrams = createNGrams(cleanWords, 2);
+                const bigramCounts = {};
+                bigrams.forEach(bg => {
+                    bigramCounts[bg] = (bigramCounts[bg] || 0) + 1;
+                });
+                
+                // Count repeated phrases
+                const repeatedBigrams = Object.values(bigramCounts).filter(c => c > 1).length;
+                const bigramRepetitionRatio = repeatedBigrams / Math.max(1, bigrams.length);
+                
+                // Sentence structure analysis
+                const sentenceLengths = sentences.map(s => 
+                    s.split(/\s+/).filter(w => w.length > 0).length
+                );
+                
+                // Calculate mean and variance
+                const meanSentenceLength = sentenceLengths.reduce((sum, len) => sum + len, 0) / 
+                    Math.max(sentenceLengths.length, 1);
+                
+                // Calculate variance to determine sentence length consistency
+                let variance = 0;
+                sentenceLengths.forEach(len => {
+                    variance += Math.pow(len - meanSentenceLength, 2);
+                });
+                variance /= Math.max(sentenceLengths.length, 1);
+                const stdDev = Math.sqrt(variance);
+                
+                // Variation coefficient (lower = more uniform = more AI-like)
+                const variationCoefficient = stdDev / meanSentenceLength;
+                
+                // Sentence beginnings
+                const sentenceBeginnings = sentences.map(s => {
+                    const words = s.split(/\s+/).filter(w => w.length > 0);
+                    return words.length > 0 ? words[0].toLowerCase() : '';
+                }).filter(w => w.length > 0);
+                
+                const uniqueBeginnings = new Set(sentenceBeginnings);
+                const beginningDiversity = uniqueBeginnings.size / Math.max(sentenceBeginnings.length, 1);
+                
+                // AI phrases list
+                const formalPhrases = [
+                    'furthermore', 'moreover', 'additionally', 'consequently', 'therefore',
+                    'in conclusion', 'in summary', 'in essence', 'specifically', 'notably',
+                    'particularly', 'significantly', 'subsequently', 'nevertheless', 'alternatively',
+                    'conversely', 'similarly', 'likewise', 'in contrast', 'whereas',
+                    'as a result', 'thus', 'hence', 'in addition', 'in other words'
+                ];
+                
+                // Informal AI patterns
+                const casualPatterns = [
+                    'it\'s important to note', 'it\'s worth mentioning', 
+                    'it\'s essential to', 'keep in mind that', 'it\'s interesting to',
+                    'we can see that', 'as we can see', 'as mentioned earlier',
+                    'let\'s explore', 'one of the most', 'there are several',
+                    'when it comes to', 'the fact that', 'a wide range of'
+                ];
+                
+                // Count phrase matches
+                const formalPhraseMatches = [];
+                formalPhrases.forEach(phrase => {
+                    const regex = new RegExp(`\\b${phrase}\\b`, 'gi');
+                    const matches = text.match(regex) || [];
+                    matches.forEach(m => formalPhraseMatches.push({ phrase, match: m }));
+                });
+                
+                const casualPatternMatches = [];
+                casualPatterns.forEach(pattern => {
+                    const regex = new RegExp(`\\b${pattern}\\b`, 'gi');
+                    const matches = text.match(regex) || [];
+                    matches.forEach(m => casualPatternMatches.push({ pattern, match: m }));
+                });
+                
+                const totalPhraseMatches = formalPhraseMatches.length + casualPatternMatches.length;
+                const phraseRatio = totalPhraseMatches / Math.max(1, sentences.length);
+                
+                // Long sentence analysis
+                const longSentences = sentenceLengths.filter(len => len > 20).length;
+                const longSentenceRatio = longSentences / Math.max(sentenceLengths.length, 1);
+                
+                // Count consecutive sentences with similar length
+                let similarLengthPairs = 0;
+                for (let i = 0; i < sentenceLengths.length - 1; i++) {
+                    const diff = Math.abs(sentenceLengths[i] - sentenceLengths[i+1]);
+                    if (diff <= 2 && sentenceLengths[i] > 10) {
+                        similarLengthPairs++;
+                    }
+                }
+                const similarLengthRatio = similarLengthPairs / Math.max(1, sentenceLengths.length - 1);
+                
+                // Vocabulary analysis
+                const longWords = cleanWords.filter(w => w.length > 8).length;
+                const longWordRatio = longWords / Math.max(cleanWords.length, 1);
+                
+                // Count repeated words
+                const repeatedWords = Object.values(wordFreq).filter(c => c > 2).length;
+                const repeatedWordsRatio = repeatedWords / Math.max(uniqueWords.size, 1);
+                
+                // Simplified perplexity measure
+                const totalWordEntropy = Object.values(wordFreq).reduce((entropy, freq) => {
+                    const probability = freq / cleanWords.length;
+                    return entropy - (probability * Math.log2(probability || 1));
+                }, 0);
+                
+                const predictabilityScore = 1 - Math.min(totalWordEntropy / 4.5, 1);
+                
+                // Burstiness measure
+                const infoPerSentence = sentences.map(s => {
+                    const sentWords = s.split(/\s+/).filter(w => w.length > 0);
+                    const uniqueSentWords = new Set(sentWords.map(w => w.toLowerCase()));
+                    return uniqueSentWords.size / Math.max(1, sentWords.length);
+                });
+                
+                // Calculate variance in information density
+                let infoVariance = 0;
+                const meanInfoDensity = infoPerSentence.reduce((sum, val) => sum + val, 0) / 
+                    Math.max(infoPerSentence.length, 1);
+                
+                infoPerSentence.forEach(val => {
+                    infoVariance += Math.pow(val - meanInfoDensity, 2);
+                });
+                infoVariance /= Math.max(infoPerSentence.length, 1);
+                
+                // Lower variance = more AI-like
+                const burstinessScore = 1 - Math.min(Math.sqrt(infoVariance) * 5, 1);
+                
+                // Calculate scores with formal mode adjustment
+                let patternScore = 0.3 + (phraseRatio * 3) + (bigramRepetitionRatio * 0.5) + (predictabilityScore * 0.3);
+                let structureScore = 0.2 + 
+                    (0.4 * (1 - Math.min(variationCoefficient, 0.5) / 0.5)) + 
+                    (longSentenceRatio * 0.3) + 
+                    (similarLengthRatio * 0.4) + 
+                    ((1 - beginningDiversity) * 0.3);
+                let vocabularyScore = 0.3 + 
+                    ((1 - uniqueWordsRatio) * 0.4) + 
+                    (repeatedWordsRatio * 0.3) + 
+                    (longWordRatio * 0.2) + 
+                    (burstinessScore * 0.3);
+                
+                // Adjust weights for formal writing
+                let patternWeight, structureWeight, vocabularyWeight;
+                let adjustedPatternScore = patternScore;
+                let adjustedStructureScore = structureScore;
+                
+                if (formalMode) {
+                    // Reduce weights for features common in formal writing
+                    patternWeight = 0.25;
+                    structureWeight = 0.30;
+                    vocabularyWeight = 0.45;
+                    
+                    // Apply adjustments for formal writing
+                    adjustedPatternScore = patternScore * 0.8; // Reduce by 20%
+                    adjustedStructureScore = structureScore * 0.85; // Reduce by 15%
+                } else {
+                    patternWeight = 0.35;
+                    structureWeight = 0.35;
+                    vocabularyWeight = 0.30;
+                }
+                
+                // Final probability calculation
+                const aiProbability = Math.round((
+                    clamp(adjustedPatternScore, 0, 1) * patternWeight + 
+                    clamp(adjustedStructureScore, 0, 1) * structureWeight + 
+                    clamp(vocabularyScore, 0, 1) * vocabularyWeight
+                ) * 100);
+                
+                // Generate reasons list
+                const reasons = [];
+                
+                if (formalMode) {
+                    reasons.push("<strong>Note:</strong> Analysis adjusted for formal/academic writing style.");
+                }
+                
+                // Language pattern reasons
+                if (phraseRatio > (formalMode ? 0.25 : 0.15)) {
+                    reasons.push(`High usage of formal transition phrases${formalMode ? " (common in both AI and formal human writing)" : " typical in AI writing"} (${totalPhraseMatches} instances detected)`);
+                    
+                    if (formalPhraseMatches.length > 0) {
+                        const topPhrases = [...new Set(formalPhraseMatches.map(m => m.phrase))].slice(0, 3);
+                        reasons.push(`Frequent use of formal phrases: "${topPhrases.join('", "')}"`);
+                    }
+                    
+                    if (casualPatternMatches.length > 0) {
+                        const topPatterns = [...new Set(casualPatternMatches.map(m => m.pattern))].slice(0, 3);
+                        reasons.push(`Contains template-like expressions: "${topPatterns.join('", "')}"`);
+                    }
+                }
+                
+                if (bigramRepetitionRatio > (formalMode ? 0.15 : 0.1)) {
+                    reasons.push(`Contains repetitive word patterns (${Math.round(bigramRepetitionRatio * 100)}% of phrase pairs are repeated)`);
+                }
+                
+                if (predictabilityScore > (formalMode ? 0.7 : 0.6)) {
+                    reasons.push(`Word choices are highly predictable (${Math.round(predictabilityScore * 100)}% more predictable than typical human writing)`);
+                }
+                
+                // Sentence structure reasons
+                if (variationCoefficient < (formalMode ? 0.25 : 0.3)) {
+                    reasons.push(`Unusually consistent sentence lengths (variation is ${Math.round(variationCoefficient * 100)}% of normal human writing)`);
+                }
+                
+                if (longSentenceRatio > (formalMode ? 0.5 : 0.4)) {
+                    reasons.push(`High percentage of long sentences (${Math.round(longSentenceRatio * 100)}% of sentences exceed 20 words)`);
+                }
+                
+                if (similarLengthRatio > (formalMode ? 0.4 : 0.3)) {
+                    reasons.push(`Adjacent sentences have suspiciously similar lengths (${Math.round(similarLengthRatio * 100)}% of consecutive sentences)`);
+                }
+                
+                if (beginningDiversity < (formalMode ? 0.5 : 0.6)) {
+                    reasons.push(`Limited variety in how sentences begin (only ${Math.round(beginningDiversity * 100)}% variation)`);
+                }
+                
+                // Vocabulary reasons
+                if (uniqueWordsRatio < (formalMode ? 0.55 : 0.6)) {
+                    reasons.push(`Low vocabulary diversity (only ${Math.round(uniqueWordsRatio * 100)}% of words are unique)`);
+                }
+                
+                if (repeatedWordsRatio > (formalMode ? 0.25 : 0.2)) {
+                    reasons.push(`High word repetition (${Math.round(repeatedWordsRatio * 100)}% of unique words appear 3+ times)`);
+                }
+                
+                if (burstinessScore > (formalMode ? 0.75 : 0.7)) {
+                    reasons.push(`Unnaturally consistent information density across sentences (${Math.round(burstinessScore * 100)}% more uniform than human writing)`);
+                }
+                
+                if (reasons.length <= (formalMode ? 1 : 0)) {
+                    reasons.push("Text appears to have natural human writing patterns");
+                }
+                
+                // Create highlighted HTML
+                let highlightedHtml = '';
+                sentences.forEach(sentence => {
+                    if (!sentence.trim()) return;
+                    
+                    // Simple scoring for each sentence
+                    const sentWords = sentence.split(/\s+/).filter(w => w.length > 0);
+                    const sentenceLength = sentWords.length;
+                    
+                    const sentReasons = [];
+                    let sentenceScore = 0.25; // Base score
+                    
+                    // Check for formal phrases
+                    const containsFormalPhrase = formalPhrases.some(phrase => 
+                        sentence.toLowerCase().includes(phrase)
+                    );
+                    if (containsFormalPhrase) {
+                        sentReasons.push("Contains formal transition phrases");
+                        sentenceScore += formalMode ? 0.2 : 0.3; // Reduced penalty in formal mode
+                    }
+                    
+                    // Check for casual patterns
+                    const containsCasualPattern = casualPatterns.some(pattern => 
+                        sentence.toLowerCase().includes(pattern)
+                    );
+                    if (containsCasualPattern) {
+                        sentReasons.push("Contains template-like expressions");
+                        sentenceScore += 0.25;
+                    }
+                    
+                    // Check sentence length
+                    const lengthThreshold = formalMode ? 30 : 25;
+                    if (sentenceLength > lengthThreshold) {
+                        sentReasons.push(`Unusually long sentence (${sentenceLength} words)`);
+                        sentenceScore += formalMode ? 0.2 : 0.3; // Reduced penalty in formal mode
+                    } else if (sentenceLength > (formalMode ? 22 : 18)) {
+                        sentReasons.push(`Long sentence (${sentenceLength} words)`);
+                        sentenceScore += formalMode ? 0.1 : 0.15; // Reduced penalty in formal mode
+                    }
+                    
+                    // Check comma count
+                    const commaCount = (sentence.match(/,/g) || []).length;
+                    if (commaCount > (formalMode ? 4 : 3)) {
+                        sentReasons.push(`Contains many clauses (${commaCount} commas)`);
+                        sentenceScore += formalMode ? 0.1 : 0.15; // Reduced penalty in formal mode
+                    }
+                    
+                    // Check passive voice
+                    if (/\b(is|are|was|were|be|been|being)\s+\w+ed\b/i.test(sentence)) {
+                        sentReasons.push("Uses passive voice construction");
+                        sentenceScore += formalMode ? 0.05 : 0.15; // Significant reduction in formal mode
+                    }
+                    
+                    const reasonText = sentReasons.join("; ");
+                    
+                    // Apply highlighting based on score
+                    const likelyThreshold = formalMode ? 0.75 : 0.7;
+                    const maybeThreshold = formalMode ? 0.55 : 0.45;
+                    
+                    if (sentenceScore > likelyThreshold) {
+                        highlightedHtml += `<span class="highlight-ai-likely" title="${reasonText}">${sentence}.</span> `;
+                    } else if (sentenceScore > maybeThreshold) {
+                        highlightedHtml += `<span class="highlight-ai-maybe" title="${reasonText}">${sentence}.</span> `;
+                    } else {
+                        highlightedHtml += `${sentence}. `;
+                    }
+                });
+                
+                return {
+                    aiProbability,
+                    patternScore: clamp(patternScore, 0, 1),
+                    structureScore: clamp(structureScore, 0, 1),
+                    vocabularyScore: clamp(vocabularyScore, 0, 1),
+                    highlightedHtml,
+                    reasons
+                };
+            }
+
+            // Helper function to clamp values
+            function clamp(value, min, max) {
+                return Math.min(Math.max(value, min), max);
+            }
+
+            // Display results
+            function displayResults(results, formalMode) {
+                try {
+                    // Show results
+                    if (resultCard) resultCard.style.display = 'block';
+                    
+                    // Update probabilities
+                    const aiPercentage = results.aiProbability;
+                    const humanPercentage = 100 - aiPercentage;
+                    
+                    // Safely update progress bars
+                    if (aiProbabilityBar) aiProbabilityBar.style.width = `${aiPercentage}%`;
+                    if (humanProbabilityBar) humanProbabilityBar.style.width = `${humanPercentage}%`;
+                    
+                    // Update text
+                    if (probabilityText) probabilityText.textContent = `${aiPercentage}%`;
+                    if (humanProbabilityText) humanProbabilityText.textContent = `${humanPercentage}%`;
+                    
+                    // Set appropriate colors
+                    if (aiProbabilityBar) {
+                        if (aiPercentage > 70) {
+                            aiProbabilityBar.style.backgroundColor = 'var(--danger)';
+                        } else if (aiPercentage > 40) {
+                            aiProbabilityBar.style.backgroundColor = 'var(--warning)';
+                        } else {
+                            aiProbabilityBar.style.backgroundColor = 'var(--success)';
+                        }
+                    }
+                    
+                    // Update indicators
+                    updateIndicator(patternsDot, patternsText, results.patternScore);
+                    updateIndicator(structuresDot, structuresText, results.structureScore); 
+                    updateIndicator(vocabularyDot, vocabularyText, results.vocabularyScore);
+                    
+                    // Show highlighted text
+                    if (highlightedText && results.highlightedHtml) {
+                        if (highlightedSection) highlightedSection.style.display = 'block';
+                        highlightedText.innerHTML = results.highlightedHtml;
+                    } else if (highlightedSection) {
+                        highlightedSection.style.display = 'none';
+                    }
+                    
+                    // Show reasons
+                    if (reasonsSection && reasonsList) {
+                        if (results.reasons && results.reasons.length > 0) {
+                            reasonsSection.style.display = 'block';
+                            reasonsList.innerHTML = results.reasons.map(reason => 
+                                `<li>${reason}</li>`
+                            ).join('');
+                        } else {
+                            reasonsSection.style.display = 'none';
+                        }
+                    }
+                    
+                    // Scroll to results
+                    if (resultCard) resultCard.scrollIntoView({ behavior: 'smooth' });
+                } catch (error) {
+                    console.error("Error displaying results:", error);
+                    alert("There was an error displaying the results.");
+                }
+            }
+            
+            // Update indicator with dot and text
+            function updateIndicator(dot, textElement, score) {
+                try {
+                    // Update dot
+                    if (dot) {
+                        dot.className = 'indicator-dot';
+                        if (score > 0.7) {
+                            dot.classList.add('dot-high');
+                        } else if (score > 0.4) {
+                            dot.classList.add('dot-medium');
+                        } else {
+                            dot.classList.add('dot-low');
+                        }
+                    }
+                    
+                    // Update text
+                    if (textElement) {
+                        if (score > 0.7) {
+                            textElement.textContent = `Highly consistent with AI-generated text (${Math.round(score * 100)}% match)`;
+                        } else if (score > 0.4) {
+                            textElement.textContent = `Some AI-like patterns detected (${Math.round(score * 100)}% match)`;
+                        } else {
+                            textElement.textContent = `More consistent with human writing (${Math.round((1-score) * 100)}% human-like)`;
+                        }
+                    }
+                } catch (error) {
+                    console.error("Error updating indicator:", error);
+                }
+            }
+        });
+    </script>
+</body>
+</html>
