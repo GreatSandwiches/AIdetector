@@ -333,8 +333,8 @@
 <body>
     <div class="container">
         <h1>Advanced AI Text Detector</h1>
-        <p class="subtitle">Enhanced AI detection with balanced sensitivity</p>
-        <p class="version-info">v2.1 - Improved detection of AI in formal writing</p>
+        <p class="subtitle"> AI detection engine</p>
+        <p class="version-info">v3.0 - Enhanced confidence for AI text identification</p>
         
         <div class="input-group">
             <label for="text-input">Paste your text below:</label>
@@ -424,7 +424,7 @@
         </div>
         
         <div class="disclaimer">
-            <p><strong>Disclaimer:</strong> This AI detector uses advanced linguistic analysis with improved accuracy for academic and professional text. While highly accurate, no detector is 100% reliable. <strong>Always enable "Formal Writing Mode"</strong> when analyzing academic, technical, or professional content to minimize false positives. Results should be considered alongside human judgment.</p>
+            <p><strong>Disclaimer:</strong> This high-confidence AI detector uses advanced linguistic analysis optimized to identify AI-generated content with higher certainty. <strong>Enable "Formal Writing Mode"</strong> when analyzing academic, technical, or professional content. This detector is calibrated to minimize uncertainty and provide clear, decisive results about potential AI authorship.</p>
         </div>
     </div>
 
@@ -765,17 +765,17 @@ My brother works in cybersecurity, and he says we're not prepared for what's com
                 const burstinessScore = 1 - Math.min(Math.sqrt(infoVariance) * 5, 1);
                 
                 // Calculate scores with improved formal mode adjustment
-                // For pattern score, balanced weight to formal phrases in formal mode
+                // For pattern score, increased weights for AI indicators
                 let patternScore = 0.3 + 
-                    (phraseRatio * (formalMode ? 2.5 : 3)) + 
-                    (trigramRepetitionRatio * 0.7) +  // Increased emphasis on trigrams
-                    (bigramRepetitionRatio * 0.3) + 
-                    (predictabilityScore * (formalMode ? 0.4 : 0.3));
+                    (phraseRatio * (formalMode ? 3.0 : 3.5)) + // Stronger emphasis on phrases
+                    (trigramRepetitionRatio * 0.9) +  // Much higher emphasis on trigrams
+                    (bigramRepetitionRatio * 0.4) +  // Higher emphasis on bigrams
+                    (predictabilityScore * (formalMode ? 0.5 : 0.4)); // Higher emphasis on predictability
                 
-                // Reduce pattern score if we see human indicators (less reduction in formal mode)
-                patternScore -= (contractionRatio * (formalMode ? 0.2 : 0.4) + 
-                              pronounRatio * (formalMode ? 0.15 : 0.3) + 
-                              parentheticalRatio * (formalMode ? 0.15 : 0.3));
+                // Minimal reduction for human indicators to maintain AI detection confidence
+                patternScore -= (contractionRatio * (formalMode ? 0.15 : 0.25) + 
+                              pronounRatio * (formalMode ? 0.1 : 0.2) + 
+                              parentheticalRatio * (formalMode ? 0.1 : 0.2));
                 
                 // For structure score, be more permissive in formal mode
                 let structureScore = 0.2 + 
@@ -791,9 +791,9 @@ My brother works in cybersecurity, and he says we're not prepared for what's com
                     (longWordRatio * (formalMode ? 0.1 : 0.2)) + 
                     (burstinessScore * (formalMode ? 0.2 : 0.3));
                 
-                // In formal mode, slightly reduce the impact of academic phrases, but not too much
+                // Give less discount to academic phrases - they're often signs of AI in formal writing too
                 if (formalMode) {
-                    vocabularyScore -= academicPhraseRatio * 0.15;
+                    vocabularyScore -= academicPhraseRatio * 0.05;  // Minimal reduction
                 }
                 
                 // Adjust weights for formal writing
@@ -802,14 +802,14 @@ My brother works in cybersecurity, and he says we're not prepared for what's com
                 let adjustedStructureScore = structureScore;
                 
                 if (formalMode) {
-                    // More balanced weights for formal writing detection
-                    patternWeight = 0.30;
-                    structureWeight = 0.30;
-                    vocabularyWeight = 0.40;
+                    // More confident weights for formal writing detection
+                    patternWeight = 0.35;
+                    structureWeight = 0.35;
+                    vocabularyWeight = 0.30;
                     
-                    // Apply moderate adjustments for formal writing
-                    adjustedPatternScore = patternScore * 0.8;  // Reduce by 20%
-                    adjustedStructureScore = structureScore * 0.85;  // Reduce by 15%
+                    // Apply minimal adjustments for formal writing
+                    adjustedPatternScore = patternScore * 0.9;  // Reduce by only 10%
+                    adjustedStructureScore = structureScore * 0.9;  // Reduce by only 10%
                 } else {
                     patternWeight = 0.35;
                     structureWeight = 0.35;
@@ -821,8 +821,8 @@ My brother works in cybersecurity, and he says we're not prepared for what's com
                 let clampedStructureScore = clamp(adjustedStructureScore, 0, 1);
                 let clampedVocabularyScore = clamp(vocabularyScore, 0, 1);
                 
-                // Apply a balanced human bias factor (not too aggressive in formal mode)
-                const humanBiasFactor = formalMode ? 0.92 : 0.92;  // Equal bias in both modes
+                // Apply a stronger AI confidence factor (removes unnecessary human bias)
+                const humanBiasFactor = formalMode ? 1.0 : 1.0;  // No reduction in AI detection confidence
                 
                 const rawProbability = (
                     clampedPatternScore * patternWeight + 
@@ -959,27 +959,27 @@ My brother works in cybersecurity, and he says we're not prepared for what's com
                         sentenceScore += formalMode ? 0.1 : 0.15; // Moderate penalty in formal mode
                     }
                     
-                    // Check for human indicators to reduce score (less reduction in formal mode)
+                    // Minimal reduction for human indicators at sentence level
                     const hasContractions = /\b\w+['']\w+\b/i.test(sentence);
                     if (hasContractions) {
                         sentReasons.push("Contains contractions (human indicator)");
-                        sentenceScore -= formalMode ? 0.1 : 0.15;
+                        sentenceScore -= formalMode ? 0.05 : 0.1;
                     }
                     
-                    // Check for personal pronouns to reduce score (less reduction in formal mode)
+                    // Minimal reduction for pronouns to maintain AI detection confidence
                     const hasPersonalPronouns = personalPronouns.some(pronoun => 
                         new RegExp(`\\b${pronoun}\\b`, 'i').test(sentence)
                     );
                     if (hasPersonalPronouns) {
                         sentReasons.push("Contains personal pronouns (human indicator)");
-                        sentenceScore -= formalMode ? 0.1 : 0.2;
+                        sentenceScore -= formalMode ? 0.05 : 0.15;
                     }
                     
-                    // Check for parenthetical expressions to reduce score (less reduction in formal mode)
+                    // Minimal reduction for parentheticals to maintain AI detection confidence
                     const hasParentheticals = /\([^)]+\)/.test(sentence);
                     if (hasParentheticals) {
                         sentReasons.push("Contains parenthetical expressions (human indicator)");
-                        sentenceScore -= formalMode ? 0.08 : 0.15;
+                        sentenceScore -= formalMode ? 0.05 : 0.1;
                     }
                     
                     // Check sentence length with increased thresholds for formal writing
@@ -1020,9 +1020,9 @@ My brother works in cybersecurity, and he says we're not prepared for what's com
                     
                     const reasonText = sentReasons.join("; ");
                     
-                    // Apply highlighting based on score with balanced thresholds
-                    const likelyThreshold = formalMode ? 0.7 : 0.75; // Lower threshold in formal mode
-                    const maybeThreshold = formalMode ? 0.5 : 0.55; // Lower threshold in formal mode
+                    // Apply highlighting based on more aggressive thresholds
+                    const likelyThreshold = formalMode ? 0.6 : 0.65; // Much lower threshold for "likely AI"
+                    const maybeThreshold = formalMode ? 0.4 : 0.45; // Much lower threshold for "maybe AI"
                     
                     if (sentenceScore > likelyThreshold) {
                         highlightedHtml += `<span class="highlight-ai-likely" title="${reasonText}">${sentence}${needsPunctuation ? '.' : ''}</span> `;
@@ -1066,11 +1066,11 @@ My brother works in cybersecurity, and he says we're not prepared for what's com
                     if (probabilityText) probabilityText.textContent = `${aiPercentage}%`;
                     if (humanProbabilityText) humanProbabilityText.textContent = `${humanPercentage}%`;
                     
-                    // Set appropriate colors
+                    // Set appropriate colors with more aggressive thresholds for confidence
                     if (aiProbabilityBar) {
-                        if (aiPercentage > 75) {
+                        if (aiPercentage > 60) {
                             aiProbabilityBar.style.backgroundColor = 'var(--danger)';
-                        } else if (aiPercentage > 45) {
+                        } else if (aiPercentage > 35) {
                             aiProbabilityBar.style.backgroundColor = 'var(--warning)';
                         } else {
                             aiProbabilityBar.style.backgroundColor = 'var(--success)';
@@ -1113,9 +1113,9 @@ My brother works in cybersecurity, and he says we're not prepared for what's com
             // Update indicator with dot and text
             function updateIndicator(dot, textElement, score) {
                 try {
-                    // Adjust thresholds to match the overall adjustment
-                    const highThreshold = 0.7;
-                    const mediumThreshold = 0.4;
+                    // Lower thresholds to be more assertive with AI identification
+                    const highThreshold = 0.6; // More aggressive high threshold
+                    const mediumThreshold = 0.35; // More aggressive medium threshold
                     
                     // Update dot
                     if (dot) {
@@ -1129,14 +1129,14 @@ My brother works in cybersecurity, and he says we're not prepared for what's com
                         }
                     }
                     
-                    // Update text
+                    // Update text with stronger language
                     if (textElement) {
                         if (score > highThreshold) {
-                            textElement.textContent = `Highly consistent with AI-generated text (${Math.round(score * 100)}% match)`;
+                            textElement.textContent = `Strong indicators of AI generation (${Math.round(score * 100)}% confidence)`;
                         } else if (score > mediumThreshold) {
-                            textElement.textContent = `Some AI-like patterns detected (${Math.round(score * 100)}% match)`;
+                            textElement.textContent = `Moderate AI patterns detected (${Math.round(score * 100)}% confidence)`;
                         } else {
-                            textElement.textContent = `More consistent with human writing (${Math.round((1-score) * 100)}% human-like)`;
+                            textElement.textContent = `Likely human-written content (${Math.round((1-score) * 100)}% confidence)`;
                         }
                     }
                 } catch (error) {
