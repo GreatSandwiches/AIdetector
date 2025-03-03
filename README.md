@@ -21,7 +21,7 @@ A sophisticated web-based tool for detecting AI-generated content with high accu
 
 [Live Demo](https://checkai.info)
 
-![Screenshot of AI Text Detector](Site Preview.png)
+
 
 ## 🚀 Quick Start
 
