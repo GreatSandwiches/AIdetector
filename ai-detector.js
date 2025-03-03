@@ -1,7 +1,7 @@
 /**
  * Advanced AI Text Detector
- * v4.0 - High-accuracy model with improved pattern recognition
- * Updates to achieve 80-90% accuracy with low false positives
+ * v4.1 - High-accuracy model with reduced false positives
+ * Updates to achieve 80-90% accuracy with significantly fewer false positives on human text
  */
 
 document.addEventListener('DOMContentLoaded', function() {
@@ -142,6 +142,27 @@ My brother works in cybersecurity, and he says we're not prepared for what's com
         'stuff', 'thing', 'whatever', 'somehow', 'anyways'
     ];
 
+    // NEW: Informal punctuation patterns typical of human writing
+    const informalPunctuation = [
+        '...', '!?', '??', '!!', '?!', 
+        '!', '?? ', '...?', '...!',
+        '?!?!', '!!!'
+    ];
+
+    // NEW: Common human writing fillers
+    const humanFillers = [
+        'um', 'uh', 'er', 'ah', 'hmm', 'well,', 
+        'y\'know', 'like,', 'I guess', 'I mean',
+        'kinda', 'sorta', 'pretty much'
+    ];
+
+    // NEW: Human-specific topic shifts
+    const humanTopicShifts = [
+        'anyway', 'speaking of', 'that reminds me',
+        'by the way', 'oh,', 'oh!', 'wait,',
+        'come to think of it', 'actually,'
+    ];
+
     // Sample button click handler
     if (sampleBtn) {
         sampleBtn.addEventListener('click', function() {
@@ -200,7 +221,7 @@ My brother works in cybersecurity, and he says we're not prepared for what's com
         });
     }
 
-    // IMPROVED ANALYSIS FUNCTION with enhanced accuracy
+    // IMPROVED ANALYSIS FUNCTION with enhanced accuracy and reduced false positives
     function analyzeText(text, formalMode) {
         // Core metrics
         const words = text.split(/\s+/).filter(word => word.length > 0);
@@ -503,6 +524,33 @@ My brother works in cybersecurity, and he says we're not prepared for what's com
             emotionalWordCount += matches.length;
         });
         const emotionalRatio = emotionalWordCount / Math.max(1, sentences.length);
+
+        // NEW: Check for informal punctuation (very strong human indicator)
+        let informalPunctCount = 0;
+        informalPunctuation.forEach(pattern => {
+            const regex = new RegExp(pattern.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'g');
+            const matches = text.match(regex) || [];
+            informalPunctCount += matches.length;
+        });
+        const informalPunctRatio = informalPunctCount / Math.max(1, sentences.length);
+
+        // NEW: Check for filler words (strong human indicator)
+        let fillerCount = 0;
+        humanFillers.forEach(filler => {
+            const regex = new RegExp(`\\b${filler.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\b`, 'gi');
+            const matches = text.match(regex) || [];
+            fillerCount += matches.length;
+        });
+        const fillerRatio = fillerCount / Math.max(1, sentences.length);
+
+        // NEW: Check for topic shifts (strong human indicator)
+        let topicShiftCount = 0;
+        humanTopicShifts.forEach(shift => {
+            const regex = new RegExp(`\\b${shift.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\b`, 'gi');
+            const matches = text.match(regex) || [];
+            topicShiftCount += matches.length;
+        });
+        const topicShiftRatio = topicShiftCount / Math.max(1, sentences.length);
         
         // IMPROVEMENT 11: Advanced perplexity and language prediction measures
         // Enhanced perplexity with sliding window analysis
@@ -575,75 +623,79 @@ My brother works in cybersecurity, and he says we're not prepared for what's com
         if (formalMode) {
             if (isAcademic) {
                 // Academic formal text (patterns less reliable, structure more reliable)
-                patternWeight = 0.35;
-                structureWeight = 0.35;
-                vocabularyWeight = 0.20;
-                semanticWeight = 0.10;
+                patternWeight = 0.30; // Reduced from 0.35
+                structureWeight = 0.30; // Reduced from 0.35
+                vocabularyWeight = 0.25; // Increased from 0.20
+                semanticWeight = 0.15; // Increased from 0.10
             } else {
                 // Standard formal text
-                patternWeight = 0.40;
-                structureWeight = 0.30;
-                vocabularyWeight = 0.20;
-                semanticWeight = 0.10;
+                patternWeight = 0.35; // Reduced from 0.40
+                structureWeight = 0.25; // Reduced from 0.30
+                vocabularyWeight = 0.25; // Increased from 0.20
+                semanticWeight = 0.15; // Increased from 0.10
             }
         } else {
             if (isConversational) {
                 // Conversational text (patterns least reliable)
-                patternWeight = 0.30;
-                structureWeight = 0.30;
-                vocabularyWeight = 0.25;
-                semanticWeight = 0.15;
+                patternWeight = 0.25; // Reduced from 0.30
+                structureWeight = 0.25; // Reduced from 0.30
+                vocabularyWeight = 0.30; // Increased from 0.25
+                semanticWeight = 0.20; // Increased from 0.15
             } else {
                 // Standard informal text
-                patternWeight = 0.35;
-                structureWeight = 0.30;
-                vocabularyWeight = 0.25;
-                semanticWeight = 0.10;
+                patternWeight = 0.30; // Reduced from 0.35
+                structureWeight = 0.25; // Reduced from 0.30
+                vocabularyWeight = 0.30; // Increased from 0.25
+                semanticWeight = 0.15; // Increased from 0.10
             }
         }
         
         // IMPROVEMENT 18: Advanced statistical pattern analysis with balanced weights
         
         // Calculate weighted predictability score based on multiple metrics
-        const adaptivePredictabilityWeight = formalMode ? 1.3 : 1.6;
-        const adaptiveTransitionWeight = formalMode ? 2.0 : 2.2;
+        const adaptivePredictabilityWeight = formalMode ? 1.2 : 1.4; // Reduced from 1.3/1.6
+        const adaptiveTransitionWeight = formalMode ? 1.8 : 2.0; // Reduced from 2.0/2.2
         
         // Apply advanced pattern scoring with precise weighting
         let patternScore = 0.15 + // Lower base score to allow more room for feature weights
-            (formalPhraseRatio * 1.5) + 
-            (llmPatternRatio * 2.2) + // Most significant AI indicator
-            (casualPatternRatio * 1.3) + 
-            (lexicalPatternRatio * 1.0) + 
-            (trigramRepetitionRatio * 1.8) + 
-            (fourgramRepetitionRatio * 2.5) + // Very strong indicator of AI text
-            (bigramRepetitionRatio * 0.6) + 
-            (predictabilityScore * adaptivePredictabilityWeight) + // Enhanced predictability metric
-            (transitionUniformity * adaptiveTransitionWeight); // Context-aware transitions
+            (formalPhraseRatio * 1.2) + // Reduced from 1.5
+            (llmPatternRatio * 2.0) + // Reduced from 2.2 but still significant
+            (casualPatternRatio * 1.0) + // Reduced from 1.3
+            (lexicalPatternRatio * 0.8) + // Reduced from 1.0
+            (trigramRepetitionRatio * 1.6) + // Reduced from 1.8
+            (fourgramRepetitionRatio * 2.2) + // Reduced from 2.5
+            (bigramRepetitionRatio * 0.5) + // Reduced from 0.6
+            (predictabilityScore * adaptivePredictabilityWeight) + 
+            (transitionUniformity * adaptiveTransitionWeight);
             
         // Apply sophisticated human indicator adjustments with context awareness
         // Scale the human indicator weights based on text features
         const formalityAdjustment = formalMode ? 0.7 : 1.0;
-        const lengthAdjustment = Math.min(1.2, Math.max(0.8, text.length / 1000)); // Scale based on text length
+        const lengthAdjustment = Math.min(1.2, Math.max(0.8, text.length / 1000));
         
+        // Increased weights for human indicators to reduce false positives
         patternScore -= (
-            contractionRatio * (formalMode ? 0.6 : 0.9) * formalityAdjustment + 
-            intensifierRatio * (formalMode ? 0.5 : 0.7) * formalityAdjustment + 
-            pronounRatio * (formalMode ? 0.6 : 0.9) * formalityAdjustment * lengthAdjustment + 
-            parentheticalRatio * (formalMode ? 0.5 : 0.7) * formalityAdjustment + 
-            emotionalRatio * (formalMode ? 0.6 : 0.9) * formalityAdjustment * lengthAdjustment
+            contractionRatio * (formalMode ? 0.8 : 1.1) * formalityAdjustment + // Increased from 0.6/0.9
+            intensifierRatio * (formalMode ? 0.7 : 0.9) * formalityAdjustment + // Increased from 0.5/0.7
+            pronounRatio * (formalMode ? 0.8 : 1.1) * formalityAdjustment * lengthAdjustment + // Increased from 0.6/0.9
+            parentheticalRatio * (formalMode ? 0.6 : 0.8) * formalityAdjustment + // Increased from 0.5/0.7
+            emotionalRatio * (formalMode ? 0.8 : 1.1) * formalityAdjustment * lengthAdjustment + // Increased from 0.6/0.9
+            informalPunctRatio * (formalMode ? 1.0 : 1.5) + // NEW stronger reduction
+            fillerRatio * (formalMode ? 1.0 : 1.5) + // NEW stronger reduction
+            topicShiftRatio * (formalMode ? 0.8 : 1.2) // NEW reduction
         );
         
         // IMPROVEMENT 19: Advanced structural analysis with rhythm features
         
         // Calculate structure score with sophisticated metrics
         let structureScore = 0.15 + 
-            (0.35 * (1 - Math.min(variationCoefficient, 0.5) / 0.5)) + 
-            (naturalSkew ? -0.25 : 0.15) + // Enhanced skew importance
-            (styleConsistency * -0.4) + // NEW: Style consistency across document - higher variation is more human-like
-            (rhythmCoefficient * -0.3) + // NEW: Rhythm variation - more varied rhythm is more human-like
-            (longSentenceRatio * (formalMode ? 0.4 : 0.6)) + 
-            (similarLengthRatio * (formalMode ? 0.5 : 0.7)) + 
-            ((1 - beginningDiversity) * (formalMode ? 0.45 : 0.55));
+            (0.30 * (1 - Math.min(variationCoefficient, 0.5) / 0.5)) + // Reduced from 0.35
+            (naturalSkew ? -0.3 : 0.12) + // Adjusted from -0.25/0.15
+            (styleConsistency * -0.5) + // Increased from -0.4
+            (rhythmCoefficient * -0.4) + // Increased from -0.3
+            (longSentenceRatio * (formalMode ? 0.35 : 0.5)) + // Reduced from 0.4/0.6
+            (similarLengthRatio * (formalMode ? 0.4 : 0.6)) + // Reduced from 0.5/0.7
+            ((1 - beginningDiversity) * (formalMode ? 0.35 : 0.45)); // Reduced from 0.45/0.55
         
         // IMPROVEMENT 20: Enhanced vocabulary and information density analysis
         
@@ -670,26 +722,26 @@ My brother works in cybersecurity, and he says we're not prepared for what's com
         
         // Calculate vocabulary score with enhanced metrics
         let vocabularyScore = 0.15 + 
-            ((1 - uniqueWordsRatio) * (formalMode ? 0.5 : 0.7)) + 
-            (repeatedWordsRatio * (formalMode ? 0.5 : 0.7)) + 
-            (longWordRatio * (formalMode ? 0.2 : 0.3)) + 
-            ((1 - enhancedBurstinessScore) * (formalMode ? 0.6 : 0.8)); // Inverted because higher burstiness is human-like
+            ((1 - uniqueWordsRatio) * (formalMode ? 0.4 : 0.6)) + // Reduced from 0.5/0.7
+            (repeatedWordsRatio * (formalMode ? 0.4 : 0.6)) + // Reduced from 0.5/0.7
+            (longWordRatio * (formalMode ? 0.15 : 0.25)) + // Reduced from 0.2/0.3
+            ((1 - enhancedBurstinessScore) * (formalMode ? 0.5 : 0.7)); // Reduced from 0.6/0.8
         
         // IMPROVEMENT 25: Adjustment for human-specific indicators
         // Apply special adjustments for strong human indicators that should override other signals
         
         // Significant reductions for strong human indicators to prevent false positives
         patternScore -= (
-            idiomRatio * 1.5 + // Idioms are very strong human indicators
-            conversationalRatio * 1.2 // Conversational markers are strong human indicators
+            idiomRatio * 2.0 + // Increased from 1.5
+            conversationalRatio * 1.5 // Increased from 1.2
         );
         
         // Adjust semantic score (1 = human-like variations, 0 = AI-like uniformity)
         const semanticScore = Math.min(1 - semanticConsistencyScore, 1);
         
         // Apply minimal adjustments for formal writing mode
-        let adjustedPatternScore = patternScore * (formalMode ? 0.95 : 1.0);
-        let adjustedStructureScore = structureScore * (formalMode ? 0.95 : 1.0);
+        let adjustedPatternScore = patternScore * (formalMode ? 0.9 : 1.0); // Reduced from 0.95/1.0
+        let adjustedStructureScore = structureScore * (formalMode ? 0.9 : 1.0); // Reduced from 0.95/1.0
         
         // Final probability calculation with adaptive scoring
         let clampedPatternScore = clamp(adjustedPatternScore, 0, 1);
@@ -697,20 +749,33 @@ My brother works in cybersecurity, and he says we're not prepared for what's com
         let clampedVocabularyScore = clamp(vocabularyScore, 0, 1);
         let clampedSemanticScore = clamp(semanticScore, 0, 1);
         
-        // Adaptive bias factor based on text characteristics
-        // Reduces confidence in ambiguous cases, increases it in clear-cut cases
-        const humanBiasFactor = formalMode ? 0.9 : 0.95;
+        // Adaptive bias factor based on text characteristics - reduced to lower false positives
+        const humanBiasFactor = formalMode ? 0.85 : 0.9; // Reduced from 0.9/0.95
         
-        // Override for extremely strong human indicators
+        // NEW: Override for combining multiple human indicators
+        const modestHumanIndicatorsCount = 
+            (contractionRatio > 0.1 ? 1 : 0) +
+            (emotionalRatio > 0.1 ? 1 : 0) +
+            (pronounRatio > 0.15 ? 1 : 0) +
+            (idiomRatio > 0 ? 1 : 0) +
+            (informalPunctRatio > 0 ? 1 : 0) +
+            (fillerRatio > 0 ? 1 : 0) +
+            (topicShiftRatio > 0 ? 1 : 0) +
+            (conversationalRatio > 0.05 ? 1 : 0);
+        
+        // Override for extremely strong human indicators or multiple moderate indicators
         const hasStrongHumanIndicators = 
             (idiomRatio > 0.1) || 
             (conversationalRatio > 0.3) || 
-            (emotionalRatio > 0.3 && pronounRatio > 0.3);
+            (emotionalRatio > 0.3 && pronounRatio > 0.3) ||
+            (informalPunctRatio > 0.15) ||
+            (fillerRatio > 0.1) ||
+            (modestHumanIndicatorsCount >= 3); // NEW: Multiple modest indicators matter
             
         // Calculate probability with all factors
         const rawProbability = hasStrongHumanIndicators ? 
-            // If strong human indicators present, cap AI probability
-            Math.min(0.4, (
+            // If strong human indicators present, cap AI probability more aggressively
+            Math.min(0.35, (  // Reduced from 0.4
                 clampedPatternScore * patternWeight + 
                 clampedStructureScore * structureWeight + 
                 clampedVocabularyScore * vocabularyWeight +
@@ -724,8 +789,21 @@ My brother works in cybersecurity, and he says we're not prepared for what's com
                 clampedSemanticScore * semanticWeight
             );
         
+        // NEW: Apply graduated confidence reduction to reduce false positives
+        let confidenceAdjustment = humanBiasFactor;
+        
+        // If there are some human indicators, reduce confidence further
+        if (modestHumanIndicatorsCount >= 1 && modestHumanIndicatorsCount < 3) {
+            confidenceAdjustment *= 0.95;
+        }
+        
+        // If borderline AI probability but has some human indicators, reduce confidence
+        if (rawProbability > 0.5 && rawProbability < 0.7 && modestHumanIndicatorsCount >= 1) {
+            confidenceAdjustment *= 0.9;
+        }
+        
         // Apply the confidence adjustment
-        const aiProbability = Math.min(100, Math.round(rawProbability * 100 * humanBiasFactor));
+        const aiProbability = Math.min(100, Math.round(rawProbability * 100 * confidenceAdjustment));
         
         // Generate reasons with more precise explanations
         const reasons = [];
@@ -772,15 +850,15 @@ My brother works in cybersecurity, and he says we're not prepared for what's com
             reasons.push(`Contains repetitive 4-word patterns (${Math.round(fourgramRepetitionRatio * 100)}% of 4-word sequences are repeated - very rare in human writing)`);
         }
         
-        if (trigramRepetitionRatio > (formalMode ? 0.04 : 0.03)) {
+        if (trigramRepetitionRatio > (formalMode ? 0.05 : 0.04)) { // Increased from 0.04/0.03
             reasons.push(`Contains repetitive multi-word patterns (${Math.round(trigramRepetitionRatio * 100)}% of 3-word sequences are repeated)`);
         }
         
-        if (predictabilityScore > (formalMode ? 0.65 : 0.6)) {
+        if (predictabilityScore > (formalMode ? 0.70 : 0.65)) { // Increased from 0.65/0.6
             reasons.push(`Word choices are highly predictable (${Math.round(predictabilityScore * 100)}% more predictable than typical human writing)`);
         }
         
-        if (transitionUniformity > 0.6) {
+        if (transitionUniformity > 0.65) { // Increased from 0.6
             reasons.push(`Word transitions show unusually consistent patterns (${Math.round(transitionUniformity * 100)}% more uniform than human writing)`);
         }
         
@@ -793,13 +871,16 @@ My brother works in cybersecurity, and he says we're not prepared for what's com
         if (parentheticalRatio > 0.1) humanIndicators.push('parenthetical expressions');
         if (idiomRatio > 0) humanIndicators.push('idioms');
         if (conversationalRatio > 0.1) humanIndicators.push('conversational markers');
+        if (informalPunctRatio > 0) humanIndicators.push('informal punctuation');
+        if (fillerRatio > 0) humanIndicators.push('filler words');
+        if (topicShiftRatio > 0) humanIndicators.push('natural topic shifts');
         
         if (humanIndicators.length > 0) {
             reasons.push(`Contains natural human writing indicators: ${humanIndicators.join(', ')}`);
         }
         
         // Sentence structure reasons with better explanation
-        if (variationCoefficient < (formalMode ? 0.2 : 0.25)) {
+        if (variationCoefficient < (formalMode ? 0.18 : 0.22)) { // Reduced from 0.2/0.25
             reasons.push(`Unusually consistent sentence lengths (variation is ${Math.round(variationCoefficient * 100)}% of normal human writing)`);
         }
         
@@ -807,32 +888,32 @@ My brother works in cybersecurity, and he says we're not prepared for what's com
             reasons.push('Sentence length distribution lacks the natural skew typical in human writing');
         }
         
-        if (longSentenceRatio > structureThreshold) {
+        if (longSentenceRatio > (structureThreshold + 0.05)) { // Added buffer to reduce false positives
             reasons.push(`High percentage of long sentences (${Math.round(longSentenceRatio * 100)}% of sentences exceed ${lengthThreshold} words)`);
         }
         
-        if (similarLengthRatio > (formalMode ? 0.45 : 0.35)) {
+        if (similarLengthRatio > (formalMode ? 0.50 : 0.40)) { // Increased from 0.45/0.35
             reasons.push(`Adjacent sentences have suspiciously similar lengths (${Math.round(similarLengthRatio * 100)}% of consecutive sentences)`);
         }
         
-        if (beginningDiversity < (formalMode ? 0.4 : 0.5)) {
+        if (beginningDiversity < (formalMode ? 0.35 : 0.45)) { // Reduced from 0.4/0.5
             reasons.push(`Limited variety in how sentences begin (only ${Math.round(beginningDiversity * 100)}% variation)`);
         }
         
-        if (styleConsistency < 0.3) {
+        if (styleConsistency < 0.25) { // Reduced from 0.3
             reasons.push('Writing style is suspiciously consistent throughout the text');
         }
         
         // Vocabulary reasons with more precision
-        if (uniqueWordsRatio < (formalMode ? 0.48 : 0.52)) {
+        if (uniqueWordsRatio < (formalMode ? 0.45 : 0.48)) { // Reduced from 0.48/0.52
             reasons.push(`Lower vocabulary diversity (only ${Math.round(uniqueWordsRatio * 100)}% of words are unique)`);
         }
         
-        if (repeatedWordsRatio > vocabularyThreshold) {
+        if (repeatedWordsRatio > (vocabularyThreshold + 0.05)) { // Added buffer
             reasons.push(`High word repetition (${Math.round(repeatedWordsRatio * 100)}% of unique words appear ${repeatedWordsThreshold + 1}+ times)`);
         }
         
-        if (enhancedBurstinessScore < 0.3) {
+        if (enhancedBurstinessScore < 0.25) { // Reduced from 0.3
             reasons.push(`Unnaturally consistent information density across the text (typical of AI writing)`);
         }
         
@@ -844,6 +925,15 @@ My brother works in cybersecurity, and he says we're not prepared for what's com
         // Fallback reason for human-like text
         if (reasons.length <= (formalMode ? 2 : 1)) {
             reasons.push("Text appears to have natural human writing patterns");
+        }
+        
+        // NEW: Add confidence tier explanation
+        if (aiProbability > 85) {
+            reasons.push("<strong>High confidence assessment:</strong> Text shows multiple strong indicators of AI generation");
+        } else if (aiProbability > 65) {
+            reasons.push("<strong>Moderate confidence assessment:</strong> Text shows some indicators of AI generation but may be ambiguous");
+        } else if (aiProbability < 35) {
+            reasons.push("<strong>High confidence assessment:</strong> Text shows multiple strong indicators of human authorship");
         }
         
         // Create highlighted HTML with improved sentence detection
@@ -867,7 +957,7 @@ My brother works in cybersecurity, and he says we're not prepared for what's com
             );
             if (containsFormalPhrase) {
                 sentReasons.push("Contains formal transition phrases");
-                sentenceScore += formalMode ? 0.15 : 0.25; // Reduced penalty in formal mode
+                sentenceScore += formalMode ? 0.12 : 0.20; // Reduced from 0.15/0.25
             }
             
             // Check for LLM patterns
@@ -876,7 +966,7 @@ My brother works in cybersecurity, and he says we're not prepared for what's com
             );
             if (containsLLMPattern) {
                 sentReasons.push("Contains AI-typical expressions");
-                sentenceScore += 0.35; // Strong indicator
+                sentenceScore += 0.30; // Reduced from 0.35
             }
             
             // Check for casual patterns
@@ -885,7 +975,7 @@ My brother works in cybersecurity, and he says we're not prepared for what's com
             );
             if (containsCasualPattern) {
                 sentReasons.push("Contains template-like expressions");
-                sentenceScore += 0.25;
+                sentenceScore += 0.20; // Reduced from 0.25
             }
             
             // Check for lexical patterns
@@ -894,30 +984,30 @@ My brother works in cybersecurity, and he says we're not prepared for what's com
             );
             if (containsLexicalPattern) {
                 sentReasons.push("Contains academic terminology");
-                sentenceScore += formalMode ? 0.15 : 0.2;
+                sentenceScore += formalMode ? 0.10 : 0.15; // Reduced from 0.15/0.2
             }
             
-            // Minimal reduction for human indicators at sentence level
+            // Increased reduction for human indicators at sentence level
             const hasContractions = /\b\w+['']\w+\b/i.test(sentence);
             if (hasContractions) {
                 sentReasons.push("Contains contractions (human indicator)");
-                sentenceScore -= formalMode ? 0.05 : 0.1;
+                sentenceScore -= formalMode ? 0.10 : 0.15; // Increased from 0.05/0.1
             }
             
-            // Minimal reduction for pronouns to maintain AI detection confidence
+            // Increased reduction for pronouns to maintain AI detection confidence
             const hasPersonalPronouns = personalPronouns.some(pronoun => 
                 new RegExp(`\\b${pronoun}\\b`, 'i').test(sentence)
             );
             if (hasPersonalPronouns) {
                 sentReasons.push("Contains personal pronouns (human indicator)");
-                sentenceScore -= formalMode ? 0.05 : 0.15;
+                sentenceScore -= formalMode ? 0.10 : 0.20; // Increased from 0.05/0.15
             }
             
-            // Minimal reduction for parentheticals to maintain AI detection confidence
+            // Increased reduction for parentheticals to maintain AI detection confidence
             const hasParentheticals = /\([^)]+\)/.test(sentence);
             if (hasParentheticals) {
                 sentReasons.push("Contains parenthetical expressions (human indicator)");
-                sentenceScore -= formalMode ? 0.05 : 0.1;
+                sentenceScore -= formalMode ? 0.10 : 0.15; // Increased from 0.05/0.1
             }
             
             // Check for emotional language
@@ -926,7 +1016,7 @@ My brother works in cybersecurity, and he says we're not prepared for what's com
             );
             if (hasEmotionalWords) {
                 sentReasons.push("Contains emotional language (human indicator)");
-                sentenceScore -= formalMode ? 0.05 : 0.15;
+                sentenceScore -= formalMode ? 0.10 : 0.20; // Increased from 0.05/0.15
             }
             
             // Check for idioms (very strong human indicator)
@@ -935,7 +1025,7 @@ My brother works in cybersecurity, and he says we're not prepared for what's com
             );
             if (hasIdioms) {
                 sentReasons.push("Contains idioms (strong human indicator)");
-                sentenceScore -= 0.2; // Significant reduction
+                sentenceScore -= 0.25; // Increased from 0.2
             }
             
             // Check for conversational markers
@@ -944,7 +1034,34 @@ My brother works in cybersecurity, and he says we're not prepared for what's com
             );
             if (hasConversationalMarkers) {
                 sentReasons.push("Contains conversational markers (human indicator)");
-                sentenceScore -= 0.15;
+                sentenceScore -= 0.20; // Increased from 0.15
+            }
+
+            // NEW: Check for informal punctuation
+            const hasInformalPunct = informalPunctuation.some(punct => 
+                sentence.includes(punct)
+            );
+            if (hasInformalPunct) {
+                sentReasons.push("Contains informal punctuation (strong human indicator)");
+                sentenceScore -= 0.25;
+            }
+
+            // NEW: Check for fillers
+            const hasFillers = humanFillers.some(filler => 
+                new RegExp(`\\b${filler.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\b`, 'i').test(sentence)
+            );
+            if (hasFillers) {
+                sentReasons.push("Contains filler words (strong human indicator)");
+                sentenceScore -= 0.25;
+            }
+
+            // NEW: Check for topic shifts
+            const hasTopicShifts = humanTopicShifts.some(shift => 
+                new RegExp(`\\b${shift.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\b`, 'i').test(sentence)
+            );
+            if (hasTopicShifts) {
+                sentReasons.push("Contains topic shift marker (human indicator)");
+                sentenceScore -= 0.20;
             }
             
             // Check sentence length with increased thresholds for formal writing
@@ -953,10 +1070,10 @@ My brother works in cybersecurity, and he says we're not prepared for what's com
             
             if (sentenceLength > lengthThresholdHigh) {
                 sentReasons.push(`Unusually long sentence (${sentenceLength} words)`);
-                sentenceScore += formalMode ? 0.15 : 0.25; // Reduced penalty in formal mode
+                sentenceScore += formalMode ? 0.12 : 0.20; // Reduced from 0.15/0.25
             } else if (sentenceLength > lengthThresholdMedium) {
                 sentReasons.push(`Long sentence (${sentenceLength} words)`);
-                sentenceScore += formalMode ? 0.1 : 0.15; // Reduced penalty in formal mode
+                sentenceScore += formalMode ? 0.08 : 0.12; // Reduced from 0.1/0.15
             }
             
             // Check comma count with increased thresholds for formal writing
@@ -964,13 +1081,13 @@ My brother works in cybersecurity, and he says we're not prepared for what's com
             const commaThresholdHigh = formalMode ? 5 : 4;
             if (commaCount > commaThresholdHigh) {
                 sentReasons.push(`Contains many clauses (${commaCount} commas)`);
-                sentenceScore += formalMode ? 0.1 : 0.15; // Reduced penalty in formal mode
+                sentenceScore += formalMode ? 0.08 : 0.12; // Reduced from 0.1/0.15
             }
             
             // Check passive voice with significantly reduced penalty in formal mode
             if (/\b(is|are|was|were|be|been|being)\s+\w+ed\b/i.test(sentence)) {
                 sentReasons.push("Uses passive voice construction");
-                sentenceScore += formalMode ? 0.05 : 0.15; // Significant reduction in formal mode
+                sentenceScore += formalMode ? 0.03 : 0.10; // Reduced from 0.05/0.15
             }
             
             // Check for adjacent similar sentences
@@ -979,7 +1096,7 @@ My brother works in cybersecurity, and he says we're not prepared for what's com
                 const currLength = sentenceLength;
                 if (Math.abs(prevLength - currLength) <= 2 && currLength > 15) {
                     sentReasons.push("Very similar length to previous sentence");
-                    sentenceScore += formalMode ? 0.1 : 0.15;
+                    sentenceScore += formalMode ? 0.08 : 0.12; // Reduced from 0.1/0.15
                 }
             }
             
@@ -990,16 +1107,29 @@ My brother works in cybersecurity, and he says we're not prepared for what's com
             const wordCount = sentWords.length;
             // Dynamic threshold that's stricter for longer sentences (which are easier to classify accurately)
             const lengthFactor = Math.min(1.2, Math.max(0.8, wordCount / 20));
-            const likelyThreshold = formalMode ? 
-                0.65 * lengthFactor : 
-                0.7 * lengthFactor;
-            const maybeThreshold = formalMode ? 
-                0.45 * lengthFactor : 
-                0.5 * lengthFactor;
             
-            if (sentenceScore > likelyThreshold) {
+            // Increased threshold to reduce false highlighting
+            const likelyThreshold = formalMode ? 
+                0.70 * lengthFactor : // Increased from 0.65
+                0.75 * lengthFactor;  // Increased from 0.7
+                
+            const maybeThreshold = formalMode ? 
+                0.50 * lengthFactor : // Increased from 0.45
+                0.55 * lengthFactor;  // Increased from 0.5
+            
+            // Apply strong human indicators override to reduce highlighting
+            let appliedThreshold = likelyThreshold;
+            let appliedMaybeThreshold = maybeThreshold;
+            
+            // If sentence contains strong human indicators, increase threshold to reduce highlighting
+            if (hasIdioms || hasConversationalMarkers || hasEmotionalWords || hasInformalPunct || hasFillers || hasTopicShifts) {
+                appliedThreshold += 0.15;
+                appliedMaybeThreshold += 0.15;
+            }
+            
+            if (sentenceScore > appliedThreshold) {
                 highlightedHtml += `<span class="highlight-ai-likely" title="${reasonText}">${sentence}${needsPunctuation ? '.' : ''}</span> `;
-            } else if (sentenceScore > maybeThreshold) {
+            } else if (sentenceScore > appliedMaybeThreshold) {
                 highlightedHtml += `<span class="highlight-ai-maybe" title="${reasonText}">${sentence}${needsPunctuation ? '.' : ''}</span> `;
             } else {
                 highlightedHtml += `${sentence}${needsPunctuation ? '.' : ''} `;
@@ -1280,9 +1410,9 @@ My brother works in cybersecurity, and he says we're not prepared for what's com
             
             // Set appropriate colors with more balanced thresholds for confidence
             if (aiProbabilityBar) {
-                if (aiPercentage > 75) { // Increased from 60
+                if (aiPercentage > 80) { // Increased from 75
                     aiProbabilityBar.style.backgroundColor = 'var(--danger)';
-                } else if (aiPercentage > 55) { // Increased from 35
+                } else if (aiPercentage > 60) { // Increased from 55
                     aiProbabilityBar.style.backgroundColor = 'var(--warning)';
                 } else {
                     aiProbabilityBar.style.backgroundColor = 'var(--success)';
@@ -1326,8 +1456,8 @@ My brother works in cybersecurity, and he says we're not prepared for what's com
     function updateIndicator(dot, textElement, score) {
         try {
             // Raised thresholds to reduce false positives
-            const highThreshold = 0.7; // Increased from 0.55
-            const mediumThreshold = 0.5; // Increased from 0.3
+            const highThreshold = 0.75; // Increased from 0.7
+            const mediumThreshold = 0.55; // Increased from 0.5
             
             // Update dot
             if (dot) {
@@ -1344,7 +1474,7 @@ My brother works in cybersecurity, and he says we're not prepared for what's com
             // Update text with more balanced language
             if (textElement) {
                 if (score > highThreshold) {
-                    textElement.textContent = `Possible AI patterns detected (${Math.round(score * 100)}% confidence)`;
+                    textElement.textContent = `Strong AI patterns detected (${Math.round(score * 100)}% confidence)`;
                 } else if (score > mediumThreshold) {
                     textElement.textContent = `Some AI-like patterns present (${Math.round(score * 100)}% confidence)`;
                 } else {
